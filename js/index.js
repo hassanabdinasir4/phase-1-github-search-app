@@ -1,67 +1,60 @@
-const APIURL =`https://api.themoviedb.org/3/discover/movie?
-api_key=04c35731a5ee918f014970082a0088b1`;
-const IMGPATH =`https://image.tmdb.org/t/p/w1280`;
+document.addEventListener('DOMContentLoaded', (event)=> {
+    event.preventDefault()
+    const gitSearch= document.querySelector('#github-form')
+    gitSearch.addEventListener('submit',function(e){
+        e.preventDefault()
+        const ul = document.querySelector('#user-list')
+        let child = ul.lastElementChild;
+        while(child){
+                ul.removeChild(child);
+                child = ul.lastElementChild;
 
-const SEARCHAPI = `https://api.themoviedb.org/3/search/movie?
-api_key=04c35731a5ee918f014970082a0088b1&query=`;
-
-const main =document.getElementById("content");
-const form = document.getElementById("form");
-const search = document.getElementById("search");
-
-getmovies(APIURL);
-
-async function getmovies(url){
-    const response = await fetch(url);
-    const data = await response.json();
-    console.log(data);
-    showMovies(data.results);
-}
-
-function showMovies(movies){
-    main.innerHTML="";
-    movies.forEach(movie=> {
-     const {poster_path,title,overview,vote_average}=movie;
-     const movieEl=document.createElement("div")
-     movieEl.className='movie-info'
-    movieEl.classList.add("movie");
-    movieEl.innerHTML=`
-        <img src="${IMGPATH}${poster_path}"alt="${title}">
-        <div class="movie-info">
-            <h3>${title}</h3>
-            <span class="${getClassByRate(vote_average)}">${vote_average}</span>
-        </div>
-        <div class="overview">
-            <h3>overview</h3>
-            ${overview}
-        </div> 
-    `;
-    main.appendChild(movieEl);
-    });
-}
-
-function getClassByRate(vote){
-    if(vote >=8){
-        return"green";
-    }else if(vote >=5){
-        return"orange";
-    }else{
-        return"red";
-    }
-}
-
-function searchMovies(url) {
-    // Fetch the movie data from the API using the provided URL
-    fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        // When the data is received, show the movies using the showMovies function
-        showMovies(data.results);
-      });
-  }
-form.addEventListener("submit", e =>{
-    e.preventDefault();
-    const searchTerm= search.value;
-    searchMovies(SEARCHAPI + searchTerm);
-    search.value ="";
+       }
+        findUser(e.target.search.value)
 })
+})
+
+function findUser(name){
+    fetch(`https://api.github.com/search/users?q=${name}`)
+    .then(response => response.json())
+    .then(users =>{
+        users.items.forEach((user) =>{
+            let li = document.createElement('li')
+            li.style.display = 'flex'
+            li.style.flexDirection = 'column'
+            let h2 = document.createElement('h2')
+            h2.textContent = user.login
+            let img = document.createElement('img')
+            img.setAttribute('src', user.avatar_url)
+            let link = document.createElement('a')
+            link.setAttribute('href', user.html_url)
+            link.innerText = "Click to view Profile"
+            let btn  = document.createElement('button')
+            btn.style.marginTop = '20px'
+            btn.innerText = `View ${user.login} Repositories`
+            btn.addEventListener('click', (e)=>{
+            
+                renderRepoList(user)
+            })
+            li.append(h2,link,img,btn)
+
+            document.querySelector('#user-list').appendChild(li)
+        })
+    })
+}
+function renderRepoList(person){
+    fetch(`https://api.github.com/users/${person.login}/repos`)
+    .then(response => response.json())
+    .then(data =>{
+        data.forEach(repo =>{
+            let li = document.createElement('li')
+            let a = document.createElement('a')
+            a.textContent = repo.name;
+            a.href = repo.html_url
+            a.style.textDecoration = 'none'
+            a.style.color = 'black'
+            li.appendChild(a)
+            document.getElementById('repos-list').appendChild(li)
+        })
+    })
+}
